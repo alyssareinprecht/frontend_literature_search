@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # literature_search_frontend
 
 This template should help get you started developing with Vue 3 in Vite.
@@ -31,3 +32,6 @@ npm run dev
 ```sh
 npm run build
 ```
+=======
+# literature_search_frontend
+>>>>>>> 572a26f0ee9b21bb4b677fe8fdc4d9eb68379bba
