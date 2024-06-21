@@ -5,9 +5,12 @@
       <h1>Literature Browser</h1>
       <h2>Priority Ranking</h2>
       <div class="tag-container">
-        <!-- Include tags -->
-        <div class="tag" v-for="(tag, index) in includeTags" :key="index" @click="removeIncludeTag(tag)">
-          {{ tag }}
+        <!-- Include tags with priority -->
+        <div class="tag" v-for="(tag, index) in includeTags" :key="index">
+          {{ tag.keyword }} (Priority: {{ tag.priority }})
+          <button @click="removeIncludeTag(tag)">Remove</button>
+          <button @click="increasePriority(tag)">↑</button>
+          <button @click="decreasePriority(tag)">↓</button>
         </div>
       </div>
     </div>
@@ -156,18 +159,47 @@ export default {
       }
     },
     toggleIncludeTag(tag) {
-      if (this.includeTags.includes(tag)) {
-        this.includeTags = this.includeTags.filter(t => t !== tag);
+      const existingTag = this.includeTags.find(t => t.keyword === tag);
+      if (existingTag) {
+        this.includeTags = this.includeTags.filter(t => t.keyword !== tag);
       } else if (this.includeTags.length < 5) {
-        this.includeTags.push(tag);
+        this.includeTags.push({ keyword: tag, priority: 5 - this.includeTags.length });
       } else {
         alert('You can only include up to 5 keyword tags.');
       }
+      this.adjustPriorities();
       this.fetchRankedPapers();
     },
     removeIncludeTag(tag) {
-      this.includeTags = this.includeTags.filter(t => t !== tag);
+      this.includeTags = this.includeTags.filter(t => t.keyword !== tag.keyword);
+      this.adjustPriorities();
       this.fetchRankedPapers();
+    },
+    adjustPriorities() {
+      const numTags = this.includeTags.length;
+      this.includeTags.forEach((tag, index) => {
+        tag.priority = 5 - index;
+      });
+    },
+    increasePriority(tag) {
+      const index = this.includeTags.indexOf(tag);
+      if (index > 0) {
+        const temp = this.includeTags[index - 1];
+        this.includeTags[index - 1] = tag;
+        this.includeTags[index] = temp;
+        this.adjustPriorities();
+        this.fetchRankedPapers();
+      }
+    },
+    decreasePriority(tag) {
+      const index = this.includeTags.indexOf(tag);
+      if (index < this.includeTags.length - 1) {
+        const temp = this.includeTags[index + 1];
+        this.includeTags[index + 1] = tag;
+        this.includeTags[index] = temp;
+        this.adjustPriorities();
+        this.fetchRankedPapers();
+      }
     },
     prevPage() {
       if (this.currentPage > 1) {
