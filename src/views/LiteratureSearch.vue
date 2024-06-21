@@ -6,12 +6,18 @@
       <h2>Priority Ranking</h2>
       <div class="tag-container">
         <!-- Include tags with priority -->
-        <div class="tag" v-for="(tag, index) in includeTags" :key="index">
-          {{ tag.keyword }} (Priority: {{ tag.priority }})
-          <button @click="removeIncludeTag(tag)">Remove</button>
-          <button @click="increasePriority(tag)">↑</button>
-          <button @click="decreasePriority(tag)">↓</button>
-        </div>
+        <draggable v-model="includeTags" @end="updatePriorities" class="drag-area" :itemKey="'keyword'">
+          <template #item="{ element }">
+            <div class="tag" :style="{ backgroundColor: element.color }">
+              {{ element.keyword }}
+              <button @click="removeIncludeTag(element)">Remove</button>
+            </div>
+          </template>
+        </draggable>
+      </div>
+      <div class="priority-scale">
+        <span>Highest Priority</span>
+        <span>Lowest Priority</span>
       </div>
     </div>
 
@@ -34,10 +40,7 @@
               <div class="table-column title">{{ item.title }}</div>
               <div class="table-column distributions">
                 <!-- Display keyword distributions -->
-                <div class="keyword-bar orange" :style="{ width: item.keywordDistribution.orange + '%' }"></div>
-                <div class="keyword-bar blue" :style="{ width: item.keywordDistribution.blue + '%' }"></div>
-                <div class="keyword-bar green" :style="{ width: item.keywordDistribution.green + '%' }"></div>
-                <div class="keyword-bar red" :style="{ width: item.keywordDistribution.red + '%' }"></div>
+                <div v-for="(weight, keyword) in sortedKeywordDistributions[index].keywordDistribution" :key="keyword" class="keyword-bar" :style="{ width: weight + '%' }" :class="getKeywordClass(keyword)"></div>
               </div>
             </div>
           </div>
@@ -80,9 +83,13 @@
 
 <script>
 import axios from 'axios';
+import draggable from 'vuedraggable';
 
 export default {
   name: 'LiteratureSearch',
+  components: {
+    draggable,
+  },
   data() {
     return {
       items: [],
@@ -90,13 +97,14 @@ export default {
       includeTags: [],
       excludeTags: [],
       currentPage: 1,
-      itemsPerPage: 15,
+      itemsPerPage: 10,
       searchQuery: '',
       includeCurrentPage: 1,
       includeItemsPerPage: 12,
       excludeCurrentPage: 1,
       excludeItemsPerPage: 12,
       isLoading: false, // Add loading state
+      availableColors: ['lightpink', 'lightskyblue', 'plum', 'moccasin', 'lightgreen'], // Define available colors
     };
   },
   computed: {
@@ -117,6 +125,30 @@ export default {
     includeTotalPages() {
       return Math.ceil(this.filteredIncludeTags.length / this.includeItemsPerPage);
     },
+    sortedKeywordDistributions() {
+      return this.paginatedItems.map(item => {
+        const sortedDistribution = Object.entries(item.keywordDistribution)
+          .sort(([keywordA], [keywordB]) => {
+            const isKeywordASelected = this.includeTags.some(tag => tag.keyword === keywordA);
+            const isKeywordBSelected = this.includeTags.some(tag => tag.keyword === keywordB);
+            if (isKeywordASelected && !isKeywordBSelected) {
+              return -1; // keywordA should come before keywordB
+            } else if (!isKeywordASelected && isKeywordBSelected) {
+              return 1; // keywordB should come before keywordA
+            } else {
+              return 0; // maintain original order if both are selected or both are unselected
+            }
+          })
+          .reduce((acc, [keyword, weight]) => {
+            acc[keyword] = weight;
+            return acc;
+          }, {});
+        return {
+          ...item,
+          keywordDistribution: sortedDistribution
+        };
+      });
+    }
   },
   methods: {
     async fetchRankedPapers() {
@@ -131,15 +163,18 @@ export default {
             exclude: this.excludeTags
           });
         }
-        this.items = response.data.map(item => ({
-          title: item.title,
-          keywordDistribution: {
-            orange: item.word_frequency_dict.orange || 0,
-            blue: item.word_frequency_dict.blue || 0,
-            green: item.word_frequency_dict.green || 0,
-            red: item.word_frequency_dict.red || 0
-          }
-        }));
+        this.items = response.data.map(item => {
+          const keywordDistribution = Array.isArray(item.keyword_scaled_importance)
+            ? item.keyword_scaled_importance.reduce((acc, [keyword, weight]) => {
+                acc[keyword] = weight * 100; // Scale the weight to a percentage
+                return acc;
+              }, {})
+            : {}; // Default to an empty object if keyword_scaled_importance is undefined or not an array
+          return {
+            title: item.title,
+            keywordDistribution
+          };
+        });
         // Adjust current page if it exceeds total pages
         if (this.currentPage > this.totalPages) {
           this.currentPage = this.totalPages;
@@ -150,6 +185,7 @@ export default {
         this.isLoading = false; // Set loading state to false
       }
     },
+
     async fetchKeywords() {
       try {
         const response = await axios.get('http://localhost:5000/keywords');
@@ -163,43 +199,26 @@ export default {
       if (existingTag) {
         this.includeTags = this.includeTags.filter(t => t.keyword !== tag);
       } else if (this.includeTags.length < 5) {
-        this.includeTags.push({ keyword: tag, priority: 5 - this.includeTags.length });
+        // Find the first available color that is not in use
+        const usedColors = this.includeTags.map(t => t.color);
+        const availableColor = this.availableColors.find(color => !usedColors.includes(color));
+        this.includeTags.push({ keyword: tag, priority: 5 - this.includeTags.length, color: availableColor });
       } else {
         alert('You can only include up to 5 keyword tags.');
       }
-      this.adjustPriorities();
+      this.updatePriorities();
       this.fetchRankedPapers();
     },
     removeIncludeTag(tag) {
       this.includeTags = this.includeTags.filter(t => t.keyword !== tag.keyword);
-      this.adjustPriorities();
+      this.updatePriorities();
       this.fetchRankedPapers();
     },
-    adjustPriorities() {
-      const numTags = this.includeTags.length;
+    updatePriorities() {
       this.includeTags.forEach((tag, index) => {
         tag.priority = 5 - index;
       });
-    },
-    increasePriority(tag) {
-      const index = this.includeTags.indexOf(tag);
-      if (index > 0) {
-        const temp = this.includeTags[index - 1];
-        this.includeTags[index - 1] = tag;
-        this.includeTags[index] = temp;
-        this.adjustPriorities();
-        this.fetchRankedPapers();
-      }
-    },
-    decreasePriority(tag) {
-      const index = this.includeTags.indexOf(tag);
-      if (index < this.includeTags.length - 1) {
-        const temp = this.includeTags[index + 1];
-        this.includeTags[index + 1] = tag;
-        this.includeTags[index] = temp;
-        this.adjustPriorities();
-        this.fetchRankedPapers();
-      }
+      this.fetchRankedPapers(); // Fetch the ranked papers after updating priorities
     },
     prevPage() {
       if (this.currentPage > 1) {
@@ -223,6 +242,10 @@ export default {
     },
     resetIncludePage() {
       this.includeCurrentPage = 1;
+    },
+    getKeywordClass(keyword) {
+      const tag = this.includeTags.find(t => t.keyword === keyword);
+      return tag ? tag.color : 'gray';
     }
   },
   watch: {
@@ -275,6 +298,11 @@ export default {
   margin-top: 10px; /* Add margin to separate from h2 */
 }
 
+.drag-area {
+  display: flex;
+  gap: 10px;
+}
+
 .tag {
   background-color: #e0e0e0;
   padding: 5px 10px;
@@ -285,6 +313,15 @@ export default {
 
 .tag:hover {
   background-color: #d0d0d0;
+}
+
+.priority-scale {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  margin-top: 10px;
+  font-size: 0.9em;
+  color: #666;
 }
 
 .content {
@@ -353,20 +390,28 @@ export default {
   border-radius: 3px;
 }
 
-.keyword-bar.orange {
-  background-color: orange;
+.keyword-bar.lightpink {
+  background-color: lightpink;
 }
 
-.keyword-bar.blue {
-  background-color: blue;
+.keyword-bar.lightskyblue {
+  background-color: lightskyblue;
 }
 
-.keyword-bar.green {
-  background-color: green;
+.keyword-bar.plum {
+  background-color: plum
 }
 
-.keyword-bar.red {
-  background-color: red;
+.keyword-bar.moccasin {
+  background-color: moccasin;
+}
+
+.keyword-bar.lightgreen {
+  background-color: lightgreen
+}
+
+.keyword-bar.gray {
+  background-color: gray;
 }
 
 .pagination {
