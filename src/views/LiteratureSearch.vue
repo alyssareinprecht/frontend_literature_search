@@ -37,7 +37,7 @@
             <!-- Display ranked papers -->
             <div v-else v-for="(item, index) in paginatedItems" :key="index" class="priority-row">
               <div class="table-column rank">{{ (currentPage - 1) * itemsPerPage + index + 1 }}</div>
-              <div class="table-column title">{{ item.title }}</div>
+              <div class="table-column title" @click="navigateToWordCloud(item.title)">{{ item.title }}</div>
               <div class="table-column distributions">
                 <!-- Display keyword distributions -->
                 <div v-for="(weight, keyword) in sortedKeywordDistributions[index].keywordDistribution" :key="keyword" class="keyword-bar" :style="{ width: weight + '%' }" :class="getKeywordClass(keyword)"></div>
@@ -193,6 +193,9 @@ export default {
       } catch (error) {
         console.error('Error fetching keywords:', error);
       }
+    },
+    navigateToWordCloud(title) {
+      this.$router.push({ name: 'word-cloud', params: { title } });
     },
     toggleIncludeTag(tag) {
       const existingTag = this.includeTags.find(t => t.keyword === tag);
