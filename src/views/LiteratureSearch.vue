@@ -10,7 +10,9 @@
           <template #item="{ element }">
             <div class="tag" :style="{ backgroundColor: element.color }">
               {{ element.keyword }}
-              <button @click="removeIncludeTag(element)">Remove</button>
+              <button @click="removeIncludeTag(element)" class="btn btn-link p-0">
+                <i class="bi bi-x"></i>
+              </button>
             </div>
           </template>
         </draggable>
