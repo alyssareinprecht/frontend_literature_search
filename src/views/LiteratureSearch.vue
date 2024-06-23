@@ -35,12 +35,22 @@
             <!-- Display loading spinner -->
             <div v-if="isLoading" class="spinner"></div>
             <!-- Display ranked papers -->
-            <div v-else v-for="(item, index) in paginatedItems" :key="index" class="priority-row">
+            <div v-else v-for="(item, index) in paginatedItems" :key="item.id" class="priority-row">
               <div class="table-column rank">{{ (currentPage - 1) * itemsPerPage + index + 1 }}</div>
-              <div class="table-column title">{{ item.title }}</div>
+              <div class="table-column title">
+                <button class="btn btn-link" type="button" data-toggle="collapse" :data-target="'#collapse' + item.id" aria-expanded="false" aria-controls="collapseExample" @click="toggleWordCloud(item.id)">
+                  {{ item.title }}
+                </button>
+              </div>
               <div class="table-column distributions">
                 <!-- Display keyword distributions -->
                 <div v-for="(weight, keyword) in sortedKeywordDistributions[index].keywordDistribution" :key="keyword" class="keyword-bar" :style="{ width: weight + '%' }" :class="getKeywordClass(keyword)"></div>
+              </div>
+              <!-- Word cloud section -->
+              <div :id="'collapse' + item.id" class="collapse">
+                <div class="word-cloud" v-if="wordClouds[item.id]">
+                  <img :src="'data:image/png;base64,' + wordClouds[item.id]" alt="Word Cloud">
+                </div>
               </div>
             </div>
           </div>
@@ -84,59 +94,55 @@
 <script>
 import axios from 'axios';
 import draggable from 'vuedraggable';
+import { reactive, computed, ref, watch } from 'vue';
 
 export default {
   name: 'LiteratureSearch',
   components: {
     draggable,
   },
-  data() {
-    return {
-      items: [],
-      allKeywords: [],
-      includeTags: [],
-      excludeTags: [],
-      currentPage: 1,
-      itemsPerPage: 10,
-      searchQuery: '',
-      includeCurrentPage: 1,
-      includeItemsPerPage: 12,
-      excludeCurrentPage: 1,
-      excludeItemsPerPage: 12,
-      isLoading: false, // Add loading state
-      availableColors: ['lightpink', 'lightskyblue', 'plum', 'moccasin', 'lightgreen'], // Define available colors
-    };
-  },
-  computed: {
-    totalPages() {
-      return Math.ceil(this.items.length / this.itemsPerPage);
-    },
-    paginatedItems() {
-      const startIndex = (this.currentPage - 1) * this.itemsPerPage;
-      return this.items.slice(startIndex, startIndex + this.itemsPerPage);
-    },
-    paginatedIncludeTags() {
-      const startIndex = (this.includeCurrentPage - 1) * this.includeItemsPerPage;
-      return this.filteredIncludeTags.slice(startIndex, startIndex + this.includeItemsPerPage);
-    },
-    filteredIncludeTags() {
-      return this.allKeywords.filter(tag => tag.toLowerCase().includes(this.searchQuery.toLowerCase()));
-    },
-    includeTotalPages() {
-      return Math.ceil(this.filteredIncludeTags.length / this.includeItemsPerPage);
-    },
-    sortedKeywordDistributions() {
-      return this.paginatedItems.map(item => {
+  setup() {
+    const items = ref([]);
+    const allKeywords = ref([]);
+    const includeTags = ref([]);
+    const excludeTags = ref([]);
+    const currentPage = ref(1);
+    const itemsPerPage = ref(10);
+    const searchQuery = ref('');
+    const includeCurrentPage = ref(1);
+    const includeItemsPerPage = ref(12);
+    const excludeCurrentPage = ref(1);
+    const excludeItemsPerPage = ref(12);
+    const isLoading = ref(false);
+    const availableColors = ['lightpink', 'lightskyblue', 'plum', 'moccasin', 'lightgreen'];
+    const wordClouds = reactive({});
+    const wordCloudsState = reactive({});
+
+    const totalPages = computed(() => Math.ceil(items.value.length / itemsPerPage.value));
+    const paginatedItems = computed(() => {
+      const startIndex = (currentPage.value - 1) * itemsPerPage.value;
+      return items.value.slice(startIndex, startIndex + itemsPerPage.value);
+    });
+    const paginatedIncludeTags = computed(() => {
+      const startIndex = (includeCurrentPage.value - 1) * includeItemsPerPage.value;
+      return filteredIncludeTags.value.slice(startIndex, startIndex + includeItemsPerPage.value);
+    });
+    const filteredIncludeTags = computed(() => {
+      return allKeywords.value.filter(tag => tag.toLowerCase().includes(searchQuery.value.toLowerCase()));
+    });
+    const includeTotalPages = computed(() => Math.ceil(filteredIncludeTags.value.length / includeItemsPerPage.value));
+    const sortedKeywordDistributions = computed(() => {
+      return paginatedItems.value.map(item => {
         const sortedDistribution = Object.entries(item.keywordDistribution)
           .sort(([keywordA], [keywordB]) => {
-            const isKeywordASelected = this.includeTags.some(tag => tag.keyword === keywordA);
-            const isKeywordBSelected = this.includeTags.some(tag => tag.keyword === keywordB);
+            const isKeywordASelected = includeTags.value.some(tag => tag.keyword === keywordA);
+            const isKeywordBSelected = includeTags.value.some(tag => tag.keyword === keywordB);
             if (isKeywordASelected && !isKeywordBSelected) {
-              return -1; // keywordA should come before keywordB
+              return -1;
             } else if (!isKeywordASelected && isKeywordBSelected) {
-              return 1; // keywordB should come before keywordA
+              return 1;
             } else {
-              return 0; // maintain original order if both are selected or both are unselected
+              return 0;
             }
           })
           .reduce((acc, [keyword, weight]) => {
@@ -148,115 +154,186 @@ export default {
           keywordDistribution: sortedDistribution
         };
       });
-    }
-  },
-  methods: {
-    async fetchRankedPapers() {
-      this.isLoading = true; // Set loading state to true
+    });
+
+    const fetchRankedPapers = async () => {
+      isLoading.value = true;
       try {
         let response;
-        if (this.includeTags.length === 0 && this.excludeTags.length === 0) {
+        if (includeTags.value.length === 0 && excludeTags.value.length === 0) {
           response = await axios.get('http://localhost:5000/all_papers');
         } else {
           response = await axios.post('http://localhost:5000/rank_papers', {
-            include: this.includeTags,
-            exclude: this.excludeTags
+            include: includeTags.value,
+            exclude: excludeTags.value
           });
         }
-        this.items = response.data.map(item => {
+        items.value = response.data.map((item, index) => {
           const keywordDistribution = Array.isArray(item.keyword_scaled_importance)
             ? item.keyword_scaled_importance.reduce((acc, [keyword, weight]) => {
-                acc[keyword] = weight * 100; // Scale the weight to a percentage
+                acc[keyword] = weight * 100;
                 return acc;
               }, {})
-            : {}; // Default to an empty object if keyword_scaled_importance is undefined or not an array
+            : {};
           return {
+            id: item.id || index, // Ensure each item has a unique ID
             title: item.title,
-            keywordDistribution
+            keywordDistribution,
+            word_frequency_dict: item.word_frequency_dict
           };
         });
-        // Adjust current page if it exceeds total pages
-        if (this.currentPage > this.totalPages) {
-          this.currentPage = this.totalPages;
+        if (currentPage.value > totalPages.value) {
+          currentPage.value = totalPages.value;
         }
       } catch (error) {
         console.error('Error fetching ranked papers:', error);
       } finally {
-        this.isLoading = false; // Set loading state to false
+        isLoading.value = false;
       }
-    },
+    };
 
-    async fetchKeywords() {
+    const fetchKeywords = async () => {
       try {
         const response = await axios.get('http://localhost:5000/keywords');
-        this.allKeywords = response.data;
+        allKeywords.value = response.data;
       } catch (error) {
         console.error('Error fetching keywords:', error);
       }
-    },
-    toggleIncludeTag(tag) {
-      const existingTag = this.includeTags.find(t => t.keyword === tag);
+    };
+
+    const toggleIncludeTag = (tag) => {
+      const existingTag = includeTags.value.find(t => t.keyword === tag);
       if (existingTag) {
-        this.includeTags = this.includeTags.filter(t => t.keyword !== tag);
-      } else if (this.includeTags.length < 5) {
-        // Find the first available color that is not in use
-        const usedColors = this.includeTags.map(t => t.color);
-        const availableColor = this.availableColors.find(color => !usedColors.includes(color));
-        this.includeTags.push({ keyword: tag, priority: 5 - this.includeTags.length, color: availableColor });
+        includeTags.value = includeTags.value.filter(t => t.keyword !== tag);
+      } else if (includeTags.value.length < 5) {
+        const usedColors = includeTags.value.map(t => t.color);
+        const availableColor = availableColors.find(color => !usedColors.includes(color));
+        includeTags.value.push({ keyword: tag, priority: 5 - includeTags.value.length, color: availableColor });
       } else {
         alert('You can only include up to 5 keyword tags.');
       }
-      this.updatePriorities();
-      this.fetchRankedPapers();
-    },
-    removeIncludeTag(tag) {
-      this.includeTags = this.includeTags.filter(t => t.keyword !== tag.keyword);
-      this.updatePriorities();
-      this.fetchRankedPapers();
-    },
-    updatePriorities() {
-      this.includeTags.forEach((tag, index) => {
+      updatePriorities();
+      fetchRankedPapers();
+      resetWordClouds();
+    };
+
+    const removeIncludeTag = (tag) => {
+      includeTags.value = includeTags.value.filter(t => t.keyword !== tag.keyword);
+      updatePriorities();
+      fetchRankedPapers();
+      resetWordClouds();
+    };
+
+    const updatePriorities = () => {
+      includeTags.value.forEach((tag, index) => {
         tag.priority = 5 - index;
       });
-      this.fetchRankedPapers(); // Fetch the ranked papers after updating priorities
-    },
-    prevPage() {
-      if (this.currentPage > 1) {
-        this.currentPage--;
+      fetchRankedPapers();
+      resetWordClouds();
+    };
+
+    const prevPage = () => {
+      if (currentPage.value > 1) {
+        currentPage.value--;
+        resetWordClouds();
       }
-    },
-    nextPage() {
-      if (this.currentPage < this.totalPages) {
-        this.currentPage++;
+    };
+
+    const nextPage = () => {
+      if (currentPage.value < totalPages.value) {
+        currentPage.value++;
+        resetWordClouds();
       }
-    },
-    prevIncludePage() {
-      if (this.includeCurrentPage > 1) {
-        this.includeCurrentPage--;
+    };
+
+    const prevIncludePage = () => {
+      if (includeCurrentPage.value > 1) {
+        includeCurrentPage.value--;
       }
-    },
-    nextIncludePage() {
-      if (this.includeCurrentPage < this.includeTotalPages) {
-        this.includeCurrentPage++;
+    };
+
+    const nextIncludePage = () => {
+      if (includeCurrentPage.value < includeTotalPages.value) {
+        includeCurrentPage.value++;
       }
-    },
-    resetIncludePage() {
-      this.includeCurrentPage = 1;
-    },
-    getKeywordClass(keyword) {
-      const tag = this.includeTags.find(t => t.keyword === keyword);
+    };
+
+    const resetIncludePage = () => {
+      includeCurrentPage.value = 1;
+    };
+
+    const getKeywordClass = (keyword) => {
+      const tag = includeTags.value.find(t => t.keyword === keyword);
       return tag ? tag.color : 'gray';
-    }
-  },
-  watch: {
-    searchQuery() {
-      this.resetIncludePage();
-    }
-  },
-  created() {
-    this.fetchRankedPapers();
-    this.fetchKeywords();
-  },
+    };
+
+    const fetchWordCloud = async (id) => {
+      const wordFrequencyDict = items.value.find(item => item.id === id).word_frequency_dict;
+      const response = await axios.post('http://localhost:5000/generate_word_cloud', { word_frequency_dict: wordFrequencyDict });
+      wordClouds[id] = response.data.word_cloud_image;
+      wordCloudsState[id] = true;
+    };
+
+    const toggleWordCloud = (id) => {
+      if (wordCloudsState[id]) {
+        delete wordClouds[id];
+        wordCloudsState[id] = false;
+      } else {
+        fetchWordCloud(id);
+      }
+    };
+
+    const resetWordClouds = () => {
+      Object.keys(wordClouds).forEach(key => {
+        delete wordClouds[key];
+        wordCloudsState[key] = false;
+      });
+    };
+
+    // Watch for changes in currentPage and reset wordClouds
+    watch(currentPage, resetWordClouds);
+
+    fetchRankedPapers();
+    fetchKeywords();
+
+    return {
+      items,
+      allKeywords,
+      includeTags,
+      excludeTags,
+      currentPage,
+      itemsPerPage,
+      searchQuery,
+      includeCurrentPage,
+      includeItemsPerPage,
+      excludeCurrentPage,
+      excludeItemsPerPage,
+      isLoading,
+      availableColors,
+      wordClouds,
+      wordCloudsState,
+      totalPages,
+      paginatedItems,
+      paginatedIncludeTags,
+      filteredIncludeTags,
+      includeTotalPages,
+      sortedKeywordDistributions,
+      fetchRankedPapers,
+      fetchKeywords,
+      toggleIncludeTag,
+      removeIncludeTag,
+      updatePriorities,
+      prevPage,
+      nextPage,
+      prevIncludePage,
+      nextIncludePage,
+      resetIncludePage,
+      getKeywordClass,
+      fetchWordCloud,
+      toggleWordCloud,
+      resetWordClouds
+    };
+  }
 };
 </script>
 
@@ -364,22 +441,22 @@ export default {
 }
 
 .table-column {
-  flex: 1;
   padding: 10px;
   text-align: left;
 }
 
 .rank {
-  width: 10%;
+  width: 10%; /* Adjust width to be smaller */
   font-weight: bold;
 }
 
 .title {
-  width: 50%;
+  width: 40%; /* Adjust width to take appropriate space */
+  cursor: pointer;
 }
 
 .distributions {
-  width: 40%;
+  width: 50%; /* Adjust width to take appropriate space */
   display: flex;
   align-items: center;
 }
@@ -399,7 +476,7 @@ export default {
 }
 
 .keyword-bar.plum {
-  background-color: plum
+  background-color: plum;
 }
 
 .keyword-bar.moccasin {
@@ -407,11 +484,16 @@ export default {
 }
 
 .keyword-bar.lightgreen {
-  background-color: lightgreen
+  background-color: lightgreen;
 }
 
 .keyword-bar.gray {
   background-color: gray;
+}
+
+.word-cloud {
+  width: 100%; /* Adjust width to take full space */
+  margin-top: 10px; /* Add margin to separate from distributions */
 }
 
 .pagination {
