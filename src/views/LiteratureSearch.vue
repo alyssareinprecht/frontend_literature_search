@@ -128,7 +128,7 @@ export default {
       return filteredIncludeTags.value.slice(startIndex, startIndex + includeItemsPerPage.value);
     });
     const filteredIncludeTags = computed(() => {
-      return allKeywords.value.filter(tag => tag.toLowerCase().includes(searchQuery.value.toLowerCase()));
+      return allKeywords.value.filter(tag => tag.toLowerCase().includes(searchQuery.value.toLowerCase()) && !includeTags.value.some(t => t.keyword === tag));
     });
     const includeTotalPages = computed(() => Math.ceil(filteredIncludeTags.value.length / includeItemsPerPage.value));
     const sortedKeywordDistributions = computed(() => {
