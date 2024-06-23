@@ -37,15 +37,7 @@
             <!-- Display ranked papers -->
             <div v-else v-for="(item, index) in paginatedItems" :key="index" class="priority-row">
               <div class="table-column rank">{{ (currentPage - 1) * itemsPerPage + index + 1 }}</div>
-              <div 
-                class="table-column title" 
-                @click="navigateToWordCloud(item.title)" 
-                @mouseover="hoveredTitle = item.title" 
-                @mouseleave="hoveredTitle = null"
-                :class="{ 'hovered': hoveredTitle === item.title, 'clicked': clickedTitle === item.title }"
-              >
-                {{ item.title }}
-              </div>
+              <div class="table-column title">{{ item.title }}</div>
               <div class="table-column distributions">
                 <!-- Display keyword distributions -->
                 <div v-for="(weight, keyword) in sortedKeywordDistributions[index].keywordDistribution" :key="keyword" class="keyword-bar" :style="{ width: weight + '%' }" :class="getKeywordClass(keyword)"></div>
@@ -113,8 +105,6 @@ export default {
       excludeItemsPerPage: 12,
       isLoading: false, // Add loading state
       availableColors: ['lightpink', 'lightskyblue', 'plum', 'moccasin', 'lightgreen'], // Define available colors
-      hoveredTitle: null, // Track hovered title
-      clickedTitle: null, // Track clicked title
     };
   },
   computed: {
@@ -203,10 +193,6 @@ export default {
       } catch (error) {
         console.error('Error fetching keywords:', error);
       }
-    },
-    navigateToWordCloud(title) {
-      this.clickedTitle = title; // Set clicked title
-      this.$router.push({ name: 'word-cloud', params: { title } });
     },
     toggleIncludeTag(tag) {
       const existingTag = this.includeTags.find(t => t.keyword === tag);
@@ -390,16 +376,6 @@ export default {
 
 .title {
   width: 50%;
-  cursor: pointer;
-  transition: background-color 0.3s;
-}
-
-.title.hovered {
-  background-color: #f0f0f0;
-}
-
-.title.clicked {
-  background-color: #d0d0d0;
 }
 
 .distributions {

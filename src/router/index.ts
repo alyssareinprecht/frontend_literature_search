@@ -1,8 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import HomeView from '../views/HomeView.vue';
-import AboutView from '../views/AboutView.vue';
-import LiteratureSearch from '@/views/LiteratureSearch.vue';
-import WordClouds from '../views/WordClouds.vue';
+import LiteratureSearch from '../views/LiteratureSearch.vue';
 
 const routes = [
   {
@@ -13,18 +11,15 @@ const routes = [
   {
     path: '/about',
     name: 'about',
+    // route level code-splitting
+    // this generates a separate chunk (About.[hash].js) for this route
+    // which is lazy-loaded when the route is visited.
     component: () => import('../views/AboutView.vue'),
   },
   {
     path: '/literature-search',
     name: 'literature-search',
     component: LiteratureSearch,
-  },
-  {
-    path: '/word-cloud/:title',
-    name: 'word-cloud',
-    component: WordClouds,
-    props: true,
   },
 ];
 
