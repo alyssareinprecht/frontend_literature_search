@@ -21,11 +21,10 @@
         <span>Highest Priority</span>
         <span>Lowest Priority</span>
       </div>
-      <div class="tag-container">
-        <!-- Exclude tags -->
-        <div class="exclude-tags">
-          <h4>Exclude</h4>
-          <div class="tag" v-for="tag in excludeTags" :key="tag.keyword" :style="{ backgroundColor: 'lightcoral' }">
+      <div class="exclude-tags">
+        <h4>Exclude</h4>
+        <div class="tag-container">
+          <div class="tag" v-for="tag in excludeTags" :key="tag.keyword" :style="{ backgroundColor: 'gray' }">
             {{ tag.keyword }}
             <button @click="removeExcludeTag(tag)" class="btn btn-link p-0">
               <i class="bi bi-x"></i>
@@ -166,7 +165,7 @@ export default {
       return filteredExcludeTags.value.slice(startIndex, startIndex + excludeItemsPerPage.value);
     });
     const filteredIncludeTags = computed(() => {
-      return allKeywords.value.filter(tag => tag.toLowerCase().includes(includeSearchQuery.value.toLowerCase()) && !includeTags.value.some(t => t.keyword === tag));
+      return allKeywords.value.filter(tag => tag.toLowerCase().includes(includeSearchQuery.value.toLowerCase()) && !includeTags.value.some(t => t.keyword === tag) && !excludeTags.value.some(t => t.keyword === tag));
     });
     const filteredExcludeTags = computed(() => {
       return allKeywords.value.filter(tag => tag.toLowerCase().includes(excludeSearchQuery.value.toLowerCase()) && !excludeTags.value.some(t => t.keyword === tag) && !includeTags.value.some(t => t.keyword === tag));
@@ -244,6 +243,10 @@ export default {
     };
 
     const toggleIncludeTag = (tag) => {
+      if (excludeTags.value.some(t => t.keyword === tag)) {
+        alert('This keyword is already excluded.');
+        return;
+      }
       const existingTag = includeTags.value.find(t => t.keyword === tag);
       if (existingTag) {
         includeTags.value = includeTags.value.filter(t => t.keyword !== tag);
@@ -260,6 +263,14 @@ export default {
     };
 
     const toggleExcludeTag = (tag) => {
+      if (includeTags.value.some(t => t.keyword === tag)) {
+        alert('This keyword is already included.');
+        return;
+      }
+      if (excludeTags.value.length >= 15) {
+        alert('You can only exclude up to 15 keyword tags.');
+        return;
+      }
       const existingTag = excludeTags.value.find(t => t.keyword === tag);
       if (existingTag) {
         excludeTags.value = excludeTags.value.filter(t => t.keyword !== tag);
@@ -269,6 +280,7 @@ export default {
       fetchRankedPapers();
       resetWordClouds();
     };
+
 
     const removeIncludeTag = (tag) => {
       includeTags.value = includeTags.value.filter(t => t.keyword !== tag.keyword);
@@ -282,6 +294,7 @@ export default {
       fetchRankedPapers();
       resetWordClouds();
     };
+
 
     const updatePriorities = () => {
       includeTags.value.forEach((tag, index) => {
@@ -459,12 +472,14 @@ export default {
 
 .tag-container {
   display: flex;
+  flex-wrap: wrap; /* Allow wrapping to the next line if there are too many tags */
   gap: 10px;
   margin-top: 10px; /* Add margin to separate from h2 */
 }
 
 .drag-area {
   display: flex;
+  flex-wrap: wrap; /* Allow wrapping to the next line if there are too many tags */
   gap: 10px;
 }
 
@@ -487,6 +502,10 @@ export default {
   margin-top: 10px;
   font-size: 0.9em;
   color: #666;
+}
+
+.exclude-tags {
+  margin-top: 20px; /* Add margin to separate from the previous section */
 }
 
 .content {
@@ -575,73 +594,66 @@ export default {
   background-color: lightgreen;
 }
 
-.keyword-bar.gray {
-  background-color: gray;
-}
-
-.word-cloud {
-  width: 100%; /* Adjust width to take full space */
-  margin-top: 10px; /* Add margin to separate from distributions */
-}
-
 .pagination {
   display: flex;
   justify-content: center;
   align-items: center;
+  gap: 10px;
   margin-top: 10px;
 }
 
 .pagination button {
-  margin: 0 10px;
   padding: 5px 10px;
-  cursor: pointer;
   border: none;
   background-color: #007bff;
   color: white;
   border-radius: 5px;
+  cursor: pointer;
   transition: background-color 0.3s;
 }
 
-.pagination button:hover {
-  background-color: #0056b3;
+.pagination button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
 }
 
-.pagination button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+.pagination button:hover:not(:disabled) {
+  background-color: #0056b3;
 }
 
 .keyword-tags {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 10px;
+}
+
+.keyword-search {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 10px;
 }
 
 .keyword-search input {
   width: 100%;
   padding: 10px;
-  margin-bottom: 10px;
   border: 1px solid #ccc;
   border-radius: 5px;
 }
 
 .keyword-tag-section {
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  overflow: hidden;
-  background-color: #fff;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .keyword-tag-row {
   display: flex;
   flex-wrap: wrap;
-  padding: 10px;
-  gap: 5px;
+  gap: 10px;
 }
 
 .keyword-tag {
-  background-color: #e0e0e0;
   padding: 5px 10px;
   border-radius: 5px;
   cursor: pointer;
@@ -649,37 +661,36 @@ export default {
 }
 
 .keyword-tag.include {
-  background-color: lightgreen;
+  background-color: #e0f7fa;
 }
 
 .keyword-tag.exclude {
-  background-color: lightcoral;
+  background-color: #ffebee;
+}
+
+.keyword-tag.selected {
+  background-color: #ffccbc;
 }
 
 .keyword-tag:hover {
   background-color: #d0d0d0;
 }
 
-.keyword-tag-section h4 {
-  margin: 0;
+.word-cloud {
+  display: flex;
+  justify-content: center;
+  align-items: center;
   padding: 10px;
-  background-color: #f0f0f0;
-  border-bottom: 1px solid #ccc;
+  background-color: #f9f9f9;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  margin-top: 10px;
 }
 
 .spinner {
-  border: 4px solid rgba(0, 0, 0, 0.1);
-  border-left-color: #09f;
-  border-radius: 50%;
-  width: 36px;
-  height: 36px;
-  animation: spin 1s linear infinite;
-  margin: auto;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100px;
 }
 </style>
