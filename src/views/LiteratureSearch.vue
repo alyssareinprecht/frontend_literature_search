@@ -144,9 +144,9 @@ export default {
     const includeSearchQuery = ref('');
     const excludeSearchQuery = ref('');
     const includeCurrentPage = ref(1);
-    const includeItemsPerPage = ref(12);
+    const includeItemsPerPage = ref(6); // Set to 6 items per page
     const excludeCurrentPage = ref(1);
-    const excludeItemsPerPage = ref(12);
+    const excludeItemsPerPage = ref(6); // Set to 6 items per page
     const isLoading = ref(false);
     const availableColors = ['lightpink', 'lightskyblue', 'plum', 'moccasin', 'lightgreen'];
     const wordClouds = reactive({});
@@ -654,10 +654,11 @@ export default {
   background-color: #0056b3;
 }
 
-.keyword-tags {
+.keyword-tags { /* keyword container for include and exclude */
   flex: 1;
   display: flex;
   flex-direction: column;
+  min-width: 20%;
   gap: 10px;
 }
 
