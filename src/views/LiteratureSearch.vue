@@ -10,9 +10,7 @@
           <template #item="{ element }">
             <div class="tag" :style="{ backgroundColor: element.color }">
               {{ element.keyword }}
-              <button @click="removeIncludeTag(element)" class="btn btn-link p-0 ml-2">
-                <i class="bi bi-x"></i>
-              </button>
+              <button @click="removeIncludeTag(element)">Remove</button>
             </div>
           </template>
         </draggable>
@@ -46,7 +44,7 @@
               </div>
               <div class="table-column distributions">
                 <!-- Display keyword distributions -->
-                <div v-for="(weight, keyword) in sortedKeywordDistributions[index].keywordDistribution" :key="keyword" class="keyword-bar" :style="{ width: weight + '%' }" :class="getKeywordClass(keyword)" :title="keyword"></div>
+                <div v-for="(weight, keyword) in sortedKeywordDistributions[index].keywordDistribution" :key="keyword" class="keyword-bar" :style="{ width: weight + '%' }" :class="getKeywordClass(keyword)"></div>
               </div>
               <!-- Word cloud section -->
               <div :id="'collapse' + item.id" class="collapse">
@@ -93,22 +91,21 @@
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent, ref, computed, reactive, watch } from 'vue';
+<script>
 import axios from 'axios';
 import draggable from 'vuedraggable';
-import { KeywordTag, Paper } from './types';
+import { reactive, computed, ref, watch } from 'vue';
 
-export default defineComponent({
+export default {
   name: 'LiteratureSearch',
   components: {
     draggable,
   },
   setup() {
-    const items = ref<Paper[]>([]);
-    const allKeywords = ref<string[]>([]);
-    const includeTags = ref<KeywordTag[]>([]);
-    const excludeTags = ref<string[]>([]);
+    const items = ref([]);
+    const allKeywords = ref([]);
+    const includeTags = ref([]);
+    const excludeTags = ref([]);
     const currentPage = ref(1);
     const itemsPerPage = ref(10);
     const searchQuery = ref('');
@@ -118,8 +115,8 @@ export default defineComponent({
     const excludeItemsPerPage = ref(12);
     const isLoading = ref(false);
     const availableColors = ['lightpink', 'lightskyblue', 'plum', 'moccasin', 'lightgreen'];
-    const wordClouds = reactive<Record<number, string>>({});
-    const wordCloudsState = reactive<Record<number, boolean>>({});
+    const wordClouds = reactive({});
+    const wordCloudsState = reactive({});
 
     const totalPages = computed(() => Math.ceil(items.value.length / itemsPerPage.value));
     const paginatedItems = computed(() => {
@@ -131,7 +128,7 @@ export default defineComponent({
       return filteredIncludeTags.value.slice(startIndex, startIndex + includeItemsPerPage.value);
     });
     const filteredIncludeTags = computed(() => {
-      return allKeywords.value.filter(tag => tag.toLowerCase().includes(searchQuery.value.toLowerCase()) && !includeTags.value.some(t => t.keyword === tag));
+      return allKeywords.value.filter(tag => tag.toLowerCase().includes(searchQuery.value.toLowerCase()));
     });
     const includeTotalPages = computed(() => Math.ceil(filteredIncludeTags.value.length / includeItemsPerPage.value));
     const sortedKeywordDistributions = computed(() => {
@@ -151,7 +148,7 @@ export default defineComponent({
           .reduce((acc, [keyword, weight]) => {
             acc[keyword] = weight;
             return acc;
-          }, {} as Record<string, number>);
+          }, {});
         return {
           ...item,
           keywordDistribution: sortedDistribution
@@ -171,9 +168,9 @@ export default defineComponent({
             exclude: excludeTags.value
           });
         }
-        items.value = response.data.map((item: any, index: number) => {
+        items.value = response.data.map((item, index) => {
           const keywordDistribution = Array.isArray(item.keyword_scaled_importance)
-            ? item.keyword_scaled_importance.reduce((acc: Record<string, number>, [keyword, weight]: [string, number]) => {
+            ? item.keyword_scaled_importance.reduce((acc, [keyword, weight]) => {
                 acc[keyword] = weight * 100;
                 return acc;
               }, {})
@@ -204,14 +201,14 @@ export default defineComponent({
       }
     };
 
-    const toggleIncludeTag = (tag: string) => {
+    const toggleIncludeTag = (tag) => {
       const existingTag = includeTags.value.find(t => t.keyword === tag);
       if (existingTag) {
         includeTags.value = includeTags.value.filter(t => t.keyword !== tag);
       } else if (includeTags.value.length < 5) {
         const usedColors = includeTags.value.map(t => t.color);
         const availableColor = availableColors.find(color => !usedColors.includes(color));
-        includeTags.value.push({ keyword: tag, priority: 5 - includeTags.value.length, color: availableColor || 'gray' });
+        includeTags.value.push({ keyword: tag, priority: 5 - includeTags.value.length, color: availableColor });
       } else {
         alert('You can only include up to 5 keyword tags.');
       }
@@ -220,7 +217,7 @@ export default defineComponent({
       resetWordClouds();
     };
 
-    const removeIncludeTag = (tag: KeywordTag) => {
+    const removeIncludeTag = (tag) => {
       includeTags.value = includeTags.value.filter(t => t.keyword !== tag.keyword);
       updatePriorities();
       fetchRankedPapers();
@@ -265,21 +262,23 @@ export default defineComponent({
       includeCurrentPage.value = 1;
     };
 
-    const getKeywordClass = (keyword: string) => {
+    const getKeywordClass = (keyword) => {
       const tag = includeTags.value.find(t => t.keyword === keyword);
       return tag ? tag.color : 'gray';
     };
 
-    const fetchWordCloud = async (id: number) => {
-      const wordFrequencyDict = items.value.find(item => item.id === id)?.word_frequency_dict;
-      if (wordFrequencyDict) {
+    const fetchWordCloud = async (id) => {
+      const wordFrequencyDict = items.value.find(item => item.id === id).word_frequency_dict;
+      try {
         const response = await axios.post('http://localhost:5000/generate_word_cloud', { word_frequency_dict: wordFrequencyDict });
         wordClouds[id] = response.data.word_cloud_image;
         wordCloudsState[id] = true;
+      } catch (error) {
+        console.error('Error fetching word cloud:', error);
       }
     };
 
-    const toggleWordCloud = (id: number) => {
+    const toggleWordCloud = (id) => {
       if (wordCloudsState[id]) {
         delete wordClouds[id];
         wordCloudsState[id] = false;
@@ -290,8 +289,8 @@ export default defineComponent({
 
     const resetWordClouds = () => {
       Object.keys(wordClouds).forEach(key => {
-        delete wordClouds[parseInt(key)];
-        wordCloudsState[parseInt(key)] = false;
+        delete wordClouds[key];
+        wordCloudsState[key] = false;
       });
     };
 
@@ -339,7 +338,7 @@ export default defineComponent({
       resetWordClouds
     };
   }
-});
+};
 </script>
 
 <style scoped>
@@ -599,5 +598,4 @@ export default defineComponent({
     transform: rotate(360deg);
   }
 }
-
 </style>
