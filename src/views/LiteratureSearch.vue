@@ -440,8 +440,9 @@ export default {
 
 <style scoped>
 .container {
-  max-width: 1200px;
-  margin: 0 auto;
+  width: 100%;
+  height: 100vh;
+  margin: 0;
   padding: 20px;
   display: flex;
   flex-direction: column;
@@ -511,13 +512,14 @@ export default {
 .content {
   display: flex;
   gap: 20px;
+  flex: 1;
 }
 
 .priority-table-container {
   flex: 3;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 20px;
 }
 
 .priority-table {
@@ -688,9 +690,19 @@ export default {
 }
 
 .spinner {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100px;
+  border: 4px solid rgba(0, 0, 0, 0.1); 
+  border-top-color: #09f; 
+  border-radius: 50%; 
+  width: 36px;
+  height: 36px;
+  animation: spin 1s linear infinite; 
+  margin: auto;
 }
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 </style>

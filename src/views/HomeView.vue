@@ -8,7 +8,6 @@
 </template>
 
 <script setup lang="ts">
-// Import any necessary components or scripts if needed
 </script>
 
 <style scoped>
@@ -17,7 +16,6 @@
   justify-content: center;
   align-items: center;
   height: 100vh; /* Full viewport height */
-  background-color: #f0f0f0; /* Light background color */
 }
 
 .content {

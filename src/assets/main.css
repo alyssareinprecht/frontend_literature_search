@@ -1,11 +1,33 @@
+/* main.css */
 @import './base.css';
 
+html, body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
 #app {
-  width: 100%; /* Use full width of the screen */
-  max-width: 100%; /* Ensure no max-width constraint */
+  width: 100%;
+  height: 100%;
   margin: 0 auto;
   padding: 2rem;
   font-weight: normal;
+}
+
+#app .container {
+  width: 100%;
+  height: 100%;
+  max-width: 100%; /* Ensure no max-width constraint */
+  margin: 0 auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  background-color: #f9f9f9;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 a,
