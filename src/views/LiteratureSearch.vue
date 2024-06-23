@@ -19,6 +19,7 @@
       </div>
       <div class="priority-scale">
         <span>Highest Priority</span>
+        <div class="double-arrow"></div>
         <span>Lowest Priority</span>
       </div>
       <div class="exclude-tags">
@@ -503,6 +504,36 @@ export default {
   margin-top: 10px;
   font-size: 0.9em;
   color: #666;
+  align-items: center; /* Center align items vertically */
+}
+
+.double-arrow {
+  flex-grow: 1;
+  height: 2px;
+  background: linear-gradient(to right, transparent, black, transparent);
+  position: relative;
+}
+
+.double-arrow::before,
+.double-arrow::after {
+  content: '';
+  position: absolute;
+  top: -5px;
+  width: 0;
+  height: 0;
+  border-style: solid;
+}
+
+.double-arrow::before {
+  left: 10px;
+  border-width: 5px 10px 5px 0;
+  border-color: transparent black transparent transparent;
+}
+
+.double-arrow::after {
+  right: 10px;
+  border-width: 5px 0 5px 10px;
+  border-color: transparent transparent transparent black;
 }
 
 .exclude-tags {
@@ -705,4 +736,10 @@ export default {
   }
 }
 
+.keyword-tag-section.include .pagination {
+  margin-bottom: 20px; 
+}
 </style>
+
+
+
