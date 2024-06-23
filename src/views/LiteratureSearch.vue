@@ -21,6 +21,18 @@
         <span>Highest Priority</span>
         <span>Lowest Priority</span>
       </div>
+      <div class="tag-container">
+        <!-- Exclude tags -->
+        <div class="exclude-tags">
+          <h4>Exclude</h4>
+          <div class="tag" v-for="tag in excludeTags" :key="tag.keyword" :style="{ backgroundColor: 'lightcoral' }">
+            {{ tag.keyword }}
+            <button @click="removeExcludeTag(tag)" class="btn btn-link p-0">
+              <i class="bi bi-x"></i>
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Main content section -->
@@ -69,9 +81,9 @@
       <!-- Keyword tags section -->
       <div class="keyword-tags">
         <h3>Keyword Tags</h3>
-        <!-- Keyword search input -->
+        <!-- Include keyword search input -->
         <div class="keyword-search">
-          <input type="text" v-model="searchQuery" @input="resetIncludePage" placeholder="Search keyword tags...">
+          <input type="text" v-model="includeSearchQuery" @input="resetIncludePage" placeholder="Search include keyword tags...">
         </div>
         <!-- Include keyword tags -->
         <div class="keyword-tag-section include">
@@ -86,6 +98,25 @@
             <button @click="prevIncludePage" :disabled="includeCurrentPage === 1">Previous</button>
             <span>Page {{ includeCurrentPage }} of {{ includeTotalPages }}</span>
             <button @click="nextIncludePage" :disabled="includeCurrentPage === includeTotalPages">Next</button>
+          </div>
+        </div>
+        <!-- Exclude keyword search input -->
+        <div class="keyword-search">
+          <input type="text" v-model="excludeSearchQuery" @input="resetExcludePage" placeholder="Search exclude keyword tags...">
+        </div>
+        <!-- Exclude keyword tags -->
+        <div class="keyword-tag-section exclude">
+          <h4>Exclude</h4>
+          <div class="keyword-tag-row">
+            <div v-for="(tag, index) in paginatedExcludeTags" :key="index" class="keyword-tag exclude" @click="toggleExcludeTag(tag)">
+              {{ tag }}
+            </div>
+          </div>
+          <!-- Exclude tags pagination controls -->
+          <div class="pagination">
+            <button @click="prevExcludePage" :disabled="excludeCurrentPage === 1">Previous</button>
+            <span>Page {{ excludeCurrentPage }} of {{ excludeTotalPages }}</span>
+            <button @click="nextExcludePage" :disabled="excludeCurrentPage === excludeTotalPages">Next</button>
           </div>
         </div>
       </div>
@@ -110,7 +141,8 @@ export default {
     const excludeTags = ref([]);
     const currentPage = ref(1);
     const itemsPerPage = ref(10);
-    const searchQuery = ref('');
+    const includeSearchQuery = ref('');
+    const excludeSearchQuery = ref('');
     const includeCurrentPage = ref(1);
     const includeItemsPerPage = ref(12);
     const excludeCurrentPage = ref(1);
@@ -129,10 +161,18 @@ export default {
       const startIndex = (includeCurrentPage.value - 1) * includeItemsPerPage.value;
       return filteredIncludeTags.value.slice(startIndex, startIndex + includeItemsPerPage.value);
     });
+    const paginatedExcludeTags = computed(() => {
+      const startIndex = (excludeCurrentPage.value - 1) * excludeItemsPerPage.value;
+      return filteredExcludeTags.value.slice(startIndex, startIndex + excludeItemsPerPage.value);
+    });
     const filteredIncludeTags = computed(() => {
-      return allKeywords.value.filter(tag => tag.toLowerCase().includes(searchQuery.value.toLowerCase()) && !includeTags.value.some(t => t.keyword === tag));
+      return allKeywords.value.filter(tag => tag.toLowerCase().includes(includeSearchQuery.value.toLowerCase()) && !includeTags.value.some(t => t.keyword === tag));
+    });
+    const filteredExcludeTags = computed(() => {
+      return allKeywords.value.filter(tag => tag.toLowerCase().includes(excludeSearchQuery.value.toLowerCase()) && !excludeTags.value.some(t => t.keyword === tag) && !includeTags.value.some(t => t.keyword === tag));
     });
     const includeTotalPages = computed(() => Math.ceil(filteredIncludeTags.value.length / includeItemsPerPage.value));
+    const excludeTotalPages = computed(() => Math.ceil(filteredExcludeTags.value.length / excludeItemsPerPage.value));
     const sortedKeywordDistributions = computed(() => {
       return paginatedItems.value.map(item => {
         const sortedDistribution = Object.entries(item.keywordDistribution)
@@ -219,9 +259,26 @@ export default {
       resetWordClouds();
     };
 
+    const toggleExcludeTag = (tag) => {
+      const existingTag = excludeTags.value.find(t => t.keyword === tag);
+      if (existingTag) {
+        excludeTags.value = excludeTags.value.filter(t => t.keyword !== tag);
+      } else {
+        excludeTags.value.push({ keyword: tag });
+      }
+      fetchRankedPapers();
+      resetWordClouds();
+    };
+
     const removeIncludeTag = (tag) => {
       includeTags.value = includeTags.value.filter(t => t.keyword !== tag.keyword);
       updatePriorities();
+      fetchRankedPapers();
+      resetWordClouds();
+    };
+
+    const removeExcludeTag = (tag) => {
+      excludeTags.value = excludeTags.value.filter(t => t.keyword !== tag.keyword);
       fetchRankedPapers();
       resetWordClouds();
     };
@@ -260,8 +317,24 @@ export default {
       }
     };
 
+    const prevExcludePage = () => {
+      if (excludeCurrentPage.value > 1) {
+        excludeCurrentPage.value--;
+      }
+    };
+
+    const nextExcludePage = () => {
+      if (excludeCurrentPage.value < excludeTotalPages.value) {
+        excludeCurrentPage.value++;
+      }
+    };
+
     const resetIncludePage = () => {
       includeCurrentPage.value = 1;
+    };
+
+    const resetExcludePage = () => {
+      excludeCurrentPage.value = 1;
     };
 
     const getKeywordClass = (keyword) => {
@@ -309,7 +382,8 @@ export default {
       excludeTags,
       currentPage,
       itemsPerPage,
-      searchQuery,
+      includeSearchQuery,
+      excludeSearchQuery,
       includeCurrentPage,
       includeItemsPerPage,
       excludeCurrentPage,
@@ -321,19 +395,27 @@ export default {
       totalPages,
       paginatedItems,
       paginatedIncludeTags,
+      paginatedExcludeTags,
       filteredIncludeTags,
+      filteredExcludeTags,
       includeTotalPages,
+      excludeTotalPages,
       sortedKeywordDistributions,
       fetchRankedPapers,
       fetchKeywords,
       toggleIncludeTag,
+      toggleExcludeTag,
       removeIncludeTag,
+      removeExcludeTag,
       updatePriorities,
       prevPage,
       nextPage,
       prevIncludePage,
       nextIncludePage,
+      prevExcludePage,
+      nextExcludePage,
       resetIncludePage,
+      resetExcludePage,
       getKeywordClass,
       fetchWordCloud,
       toggleWordCloud,
