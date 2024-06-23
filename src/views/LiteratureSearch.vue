@@ -144,9 +144,9 @@ export default {
     const includeSearchQuery = ref('');
     const excludeSearchQuery = ref('');
     const includeCurrentPage = ref(1);
-    const includeItemsPerPage = ref(6); // Set to 6 items per page
+    const includeItemsPerPage = ref(10); // Set to n items per page
     const excludeCurrentPage = ref(1);
-    const excludeItemsPerPage = ref(6); // Set to 6 items per page
+    const excludeItemsPerPage = ref(10); // Set to n items per page
     const isLoading = ref(false);
     const availableColors = ['lightpink', 'lightskyblue', 'plum', 'moccasin', 'lightgreen'];
     const wordClouds = reactive({});
@@ -441,16 +441,16 @@ export default {
 
 <style scoped>
 .container {
-  width: 100%;
-  height: 100vh;
-  margin: 0;
-  padding: 20px;
+  width: 120vh;
+  height: auto;
+  margin: 10px;
+  padding: 1rem;
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  background-color: #f9f9f9;
+  gap: 20px; 
   border-radius: 10px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  background-color: whitesmoke
+ /* box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); */
 }
 
 .header {
@@ -551,6 +551,7 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 20px;
+  min-width: 100%;
 }
 
 .priority-table {
@@ -658,7 +659,7 @@ export default {
   flex: 1;
   display: flex;
   flex-direction: column;
-  min-width: 20%;
+  min-width: 30%;
   gap: 10px;
 }
 

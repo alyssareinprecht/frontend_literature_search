@@ -80,10 +80,10 @@ nav a:hover {
 }
 
 .wrapper {
-  max-width: 1200px;
+  width: auto;
   margin: 70px auto 2rem;
   padding: 1rem;
-  background-color: transparent;
+  background-color: whitesmoke;
   border-radius: 8px; /* Added border-radius to soften edges */
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }

@@ -16,10 +16,9 @@ html, body {
   font-weight: normal;
 }
 
-#app .container {
-  width: 100%;
+#app > .container {
+  width: 100vh;
   height: 100%;
-  max-width: 100%; /* Ensure no max-width constraint */
   margin: 0 auto;
   padding: 20px;
   display: flex;
@@ -53,22 +52,5 @@ a,
   #app {
     display: block; /* Change to block to avoid grid layout issues */
     padding: 0 2rem;
-  }
-}
-
-/* Loading spinner styles */
-.spinner {
-  border: 4px solid rgba(0, 0, 0, 0.1);
-  border-left-color: #09f;
-  border-radius: 50%;
-  width: 36px;
-  height: 36px;
-  animation: spin 1s linear infinite;
-  margin: auto;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
   }
 }
