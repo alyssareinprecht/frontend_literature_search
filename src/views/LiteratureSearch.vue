@@ -10,7 +10,9 @@
           <template #item="{ element }">
             <div class="tag" :style="{ backgroundColor: element.color }">
               {{ element.keyword }}
-              <button @click="removeIncludeTag(element)">Remove</button>
+              <button @click="removeIncludeTag(element)" class="btn btn-link p-0 ml-2">
+                <i class="bi bi-x"></i>
+              </button>
             </div>
           </template>
         </draggable>
@@ -44,7 +46,7 @@
               </div>
               <div class="table-column distributions">
                 <!-- Display keyword distributions -->
-                <div v-for="(weight, keyword) in sortedKeywordDistributions[index].keywordDistribution" :key="keyword" class="keyword-bar" :style="{ width: weight + '%' }" :class="getKeywordClass(keyword)"></div>
+                <div v-for="(weight, keyword) in sortedKeywordDistributions[index].keywordDistribution" :key="keyword" class="keyword-bar" :style="{ width: weight + '%' }" :class="getKeywordClass(keyword)" :title="keyword"></div>
               </div>
               <!-- Word cloud section -->
               <div :id="'collapse' + item.id" class="collapse">
@@ -340,7 +342,7 @@ export default defineComponent({
 });
 </script>
 
-<style scoped> 
+<style scoped>
 .container {
   max-width: 1200px;
   margin: 0 auto;
