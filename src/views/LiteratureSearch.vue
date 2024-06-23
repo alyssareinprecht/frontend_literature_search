@@ -57,7 +57,7 @@
               </div>
               <div class="table-column distributions">
                 <!-- Display keyword distributions -->
-                <div v-for="(weight, keyword) in sortedKeywordDistributions[index].keywordDistribution" :key="keyword" class="keyword-bar" :style="{ width: weight + '%' }" :class="getKeywordClass(keyword)"></div>
+                <div v-for="(weight, keyword) in sortedKeywordDistributions[index].keywordDistribution" :key="keyword" class="keyword-bar" :style="{ width: weight + '%' }" :class="getKeywordClass(keyword)" :title="weight.toFixed(2) + '%'"></div>
               </div>
               <!-- Word cloud section -->
               <div :id="'collapse' + item.id" class="collapse">
