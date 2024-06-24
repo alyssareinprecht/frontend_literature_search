@@ -144,9 +144,9 @@ export default {
     const includeSearchQuery = ref('');
     const excludeSearchQuery = ref('');
     const includeCurrentPage = ref(1);
-    const includeItemsPerPage = ref(10); // Set to n items per page
+    const includeItemsPerPage = ref(12); // Set to n items per page
     const excludeCurrentPage = ref(1);
-    const excludeItemsPerPage = ref(10); // Set to n items per page
+    const excludeItemsPerPage = ref(12); // Set to n items per page
     const isLoading = ref(false);
     const availableColors = ['lightpink', 'lightskyblue', 'plum', 'moccasin', 'lightgreen'];
     const wordClouds = reactive({});
