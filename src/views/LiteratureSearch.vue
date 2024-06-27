@@ -1,11 +1,11 @@
 <template>
   <div class="container">
-    <!-- Header and tags section -->
+    <!-- Header and tags -->
     <div class="header">
       <h1>Literature Browser</h1>
       <h2>Priority Ranking</h2>
       <div class="tag-container">
-        <!-- Include tags with priority -->
+        <!-- Include tags with priority / Change priority through drag and drop -->
         <draggable v-model="includeTags" @end="updatePriorities" class="drag-area" :itemKey="'keyword'">
           <template #item="{ element }">
             <div class="tag" :style="{ backgroundColor: element.color }">
@@ -25,6 +25,7 @@
       <div class="exclude-tags">
         <h4>Exclude</h4>
         <div class="tag-container">
+          <!-- Display excluded tags with remove button -->
           <div class="tag" v-for="tag in excludeTags" :key="tag.keyword" :style="{ backgroundColor: 'gray' }">
             {{ tag.keyword }}
             <button @click="removeExcludeTag(tag)" class="btn btn-link p-0">
@@ -35,9 +36,9 @@
       </div>
     </div>
 
-    <!-- Main content section -->
+    <!-- Main content -->
     <div class="content">
-      <!-- Priority table -->
+      <!-- Priority/Document table -->
       <div class="priority-table-container">
         <div class="priority-table">
           <div class="priority-header">
@@ -46,9 +47,9 @@
             <div class="table-column distributions">Key Distributions</div>
           </div>
           <div class="priority-body">
-            <!-- Display loading spinner -->
+            <!-- Display loading spinner while fetching data -->
             <div v-if="isLoading" class="spinner"></div>
-            <!-- Display ranked papers -->
+            <!-- Display ranked documents -->
             <div v-else v-for="(item, index) in paginatedItems" :key="item.id" class="priority-row">
               <div class="table-column rank">{{ (currentPage - 1) * itemsPerPage + index + 1 }}</div>
               <div class="table-column title">
@@ -60,7 +61,7 @@
                 <!-- Display keyword distributions -->
                 <div v-for="(weight, keyword) in sortedKeywordDistributions[index].keywordDistribution" :key="keyword" class="keyword-bar" :style="{ width: weight + '%' }" :class="getKeywordClass(keyword)" :title="weight.toFixed(2) + '%'"></div>
               </div>
-              <!-- Word cloud section -->
+              <!-- Word clouds -->
               <div :id="'collapse' + item.id" class="collapse">
                 <div class="word-cloud" v-if="wordClouds[item.id]">
                   <img :src="'data:image/png;base64,' + wordClouds[item.id]" alt="Word Cloud">
@@ -70,7 +71,7 @@
           </div>
         </div>
 
-        <!-- Pagination controls -->
+        <!-- Pagination for document table -->
         <div class="pagination">
           <button @click="prevPage" :disabled="currentPage === 1">Previous</button>
           <span>Page {{ currentPage }} of {{ totalPages }}</span>
@@ -78,7 +79,7 @@
         </div>
       </div>
 
-      <!-- Keyword tags section -->
+      <!-- Keyword tags -->
       <div class="keyword-tags">
         <h3>Keyword Tags</h3>
         <!-- Include keyword search input -->
@@ -93,7 +94,7 @@
               {{ tag }}
             </div>
           </div>
-          <!-- Include tags pagination controls -->
+          <!-- Include tags pagination -->
           <div class="pagination">
             <button @click="prevIncludePage" :disabled="includeCurrentPage === 1">Previous</button>
             <span>Page {{ includeCurrentPage }} of {{ includeTotalPages }}</span>
@@ -112,7 +113,7 @@
               {{ tag }}
             </div>
           </div>
-          <!-- Exclude tags pagination controls -->
+          <!-- Exclude tags pagination -->
           <div class="pagination">
             <button @click="prevExcludePage" :disabled="excludeCurrentPage === 1">Previous</button>
             <span>Page {{ excludeCurrentPage }} of {{ excludeTotalPages }}</span>
@@ -135,6 +136,7 @@ export default {
     draggable,
   },
   setup() {
+    // Managing states with reactive components
     const items = ref([]);
     const allKeywords = ref([]);
     const includeTags = ref([]);
@@ -152,25 +154,35 @@ export default {
     const wordClouds = reactive({});
     const wordCloudsState = reactive({});
 
+    // Computed components for pagination and filtering
     const totalPages = computed(() => Math.ceil(items.value.length / itemsPerPage.value));
     const paginatedItems = computed(() => {
       const startIndex = (currentPage.value - 1) * itemsPerPage.value;
       return items.value.slice(startIndex, startIndex + itemsPerPage.value);
     });
+
+    // Include tags to display on current page
     const paginatedIncludeTags = computed(() => {
       const startIndex = (includeCurrentPage.value - 1) * includeItemsPerPage.value;
       return filteredIncludeTags.value.slice(startIndex, startIndex + includeItemsPerPage.value);
-    });
+    }); 
+
+    // Exclude tags to display on current page
     const paginatedExcludeTags = computed(() => {
       const startIndex = (excludeCurrentPage.value - 1) * excludeItemsPerPage.value;
       return filteredExcludeTags.value.slice(startIndex, startIndex + excludeItemsPerPage.value);
-    });
+    }); 
+
+    // Filtered list of include tags based on user selection
     const filteredIncludeTags = computed(() => {
       return allKeywords.value.filter(tag => tag.toLowerCase().includes(includeSearchQuery.value.toLowerCase()) && !includeTags.value.some(t => t.keyword === tag) && !excludeTags.value.some(t => t.keyword === tag));
     });
+
+    // Filtered list of exclude tags based on user selection
     const filteredExcludeTags = computed(() => {
       return allKeywords.value.filter(tag => tag.toLowerCase().includes(excludeSearchQuery.value.toLowerCase()) && !excludeTags.value.some(t => t.keyword === tag) && !includeTags.value.some(t => t.keyword === tag));
     });
+
     const includeTotalPages = computed(() => Math.ceil(filteredIncludeTags.value.length / includeItemsPerPage.value));
     const excludeTotalPages = computed(() => Math.ceil(filteredExcludeTags.value.length / excludeItemsPerPage.value));
     const sortedKeywordDistributions = computed(() => {
@@ -198,6 +210,7 @@ export default {
       });
     });
 
+    // Fetch ranked documents from backend
     const fetchRankedPapers = async () => {
       isLoading.value = true;
       try {
@@ -210,6 +223,7 @@ export default {
             exclude: excludeTags.value
           });
         }
+        // Process response data and update list
         items.value = response.data.map((item, index) => {
           const keywordDistribution = Array.isArray(item.keyword_scaled_importance)
             ? item.keyword_scaled_importance.reduce((acc, [keyword, weight]) => {
@@ -234,6 +248,7 @@ export default {
       }
     };
 
+    // Fetch keywords from backend
     const fetchKeywords = async () => {
       try {
         const response = await axios.get('http://localhost:5000/keywords');
@@ -243,6 +258,7 @@ export default {
       }
     };
 
+    // Toggle function for include tags
     const toggleIncludeTag = (tag) => {
       if (excludeTags.value.some(t => t.keyword === tag)) {
         alert('This keyword is already excluded.');
@@ -263,6 +279,7 @@ export default {
       resetWordClouds();
     };
 
+    // Toggle function for exclude tags
     const toggleExcludeTag = (tag) => {
       if (includeTags.value.some(t => t.keyword === tag)) {
         alert('This keyword is already included.');
@@ -282,7 +299,7 @@ export default {
       resetWordClouds();
     };
 
-
+    // Function to remove include or exlude tags
     const removeIncludeTag = (tag) => {
       includeTags.value = includeTags.value.filter(t => t.keyword !== tag.keyword);
       updatePriorities();
@@ -296,7 +313,7 @@ export default {
       resetWordClouds();
     };
 
-
+    // Function to update priorities of included tags
     const updatePriorities = () => {
       includeTags.value.forEach((tag, index) => {
         tag.priority = 5 - index;
@@ -304,7 +321,8 @@ export default {
       fetchRankedPapers();
       resetWordClouds();
     };
-
+    
+    // Functions for pagination
     const prevPage = () => {
       if (currentPage.value > 1) {
         currentPage.value--;
@@ -356,6 +374,7 @@ export default {
       return tag ? tag.color : 'gray';
     };
 
+    // Fetch wordclouds from backend
     const fetchWordCloud = async (id) => {
       const wordFrequencyDict = items.value.find(item => item.id === id).word_frequency_dict;
       try {
@@ -367,6 +386,7 @@ export default {
       }
     };
 
+    // Toggle visibility of wordclouds
     const toggleWordCloud = (id) => {
       if (wordCloudsState[id]) {
         delete wordClouds[id];
@@ -376,6 +396,7 @@ export default {
       }
     };
 
+    // Resetting wordclouds
     const resetWordClouds = () => {
       Object.keys(wordClouds).forEach(key => {
         delete wordClouds[key];
@@ -383,12 +404,14 @@ export default {
       });
     };
 
-    // Watch for changes in currentPage and reset wordClouds
+    // Watch for changes in current page and reset wordclouds
     watch(currentPage, resetWordClouds);
 
+    // Initialize fetching ranked documents and keywords
     fetchRankedPapers();
     fetchKeywords();
 
+    // Return reactive components and functions
     return {
       items,
       allKeywords,
@@ -439,7 +462,7 @@ export default {
 };
 </script>
 
-<style scoped>
+<style scoped> /* Styling and layout of components */
 .container {
   width: 120vh;
   height: auto;
@@ -455,8 +478,8 @@ export default {
 
 .header {
   display: flex;
-  flex-direction: column; /* Change to column to stack elements vertically */
-  align-items: flex-start; /* Align items to the start */
+  flex-direction: column; /* Stack elements vertically */
+  align-items: flex-start; 
   margin-bottom: 20px;
 }
 
@@ -468,20 +491,20 @@ export default {
 
 .header h2 {
   font-size: 1.5em;
-  margin: 10px 0 0 0; /* Add margin to separate from h1 */
+  margin: 10px 0 0 0; 
   color: #666;
 }
 
 .tag-container {
   display: flex;
-  flex-wrap: wrap; /* Allow wrapping to the next line if there are too many tags */
+  flex-wrap: wrap; 
   gap: 10px;
-  margin-top: 10px; /* Add margin to separate from h2 */
+  margin-top: 10px; 
 }
 
 .drag-area {
   display: flex;
-  flex-wrap: wrap; /* Allow wrapping to the next line if there are too many tags */
+  flex-wrap: wrap; 
   gap: 10px;
 }
 
@@ -537,7 +560,7 @@ export default {
 }
 
 .exclude-tags {
-  margin-top: 20px; /* Add margin to separate from the previous section */
+  margin-top: 20px; 
 }
 
 .content {
@@ -587,17 +610,17 @@ export default {
 }
 
 .rank {
-  width: 10%; /* Adjust width to be smaller */
+  width: 10%; 
   font-weight: bold;
 }
 
 .title {
-  width: 40%; /* Adjust width to take appropriate space */
+  width: 40%; 
   cursor: pointer;
 }
 
 .distributions {
-  width: 50%; /* Adjust width to take appropriate space */
+  width: 50%; 
   display: flex;
   align-items: center;
 }

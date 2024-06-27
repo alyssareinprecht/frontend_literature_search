@@ -17,12 +17,12 @@
 .home {
   display: flex;
   justify-content: center;
-  align-items: flex-start; /* Align items to the start (top) */
-  height: 100vh; /* Full viewport height */
-  padding-top: 20px; /* Reduce padding to move content up */
-  background-image: url('@/assets/background.png'); /* Path to your image */
-  background-size: contain; /* Ensure the image covers the entire background */
-  background-position: center; /* Center the image */
+  align-items: flex-start; 
+  height: 100vh; 
+  padding-top: 20px; 
+  background-image: url('@/assets/background.png'); 
+  background-size: contain; 
+  background-position: center; 
   background-repeat: no-repeat; /* Prevent the image from repeating */
 }
 
@@ -34,22 +34,22 @@
 
 h1 {
   font-size: 3rem;
-  margin-bottom: 0.5rem; /* Reduce bottom margin */
-  color: #333; /* Dark text color */
+  margin-bottom: 0.5rem; 
+  color: #333; 
 }
 
 p {
   font-size: 1.5rem;
-  color: #666; /* Medium-dark text color */
-  margin-bottom: 0.5rem; /* Reduce bottom margin */
+  color: #666; 
+  margin-bottom: 0.5rem; 
 }
 
 .start-button {
-  margin-top: 30px; /* Reduce the margin to move the button up */
-  padding: 6px 18px; /* Reduce the padding to make the button smaller */
-  font-size: 1.1rem; /* Adjust the font size to make the text smaller */
+  margin-top: 30px; 
+  padding: 6px 18px; 
+  font-size: 1.1rem; 
   color: #fff;
-  background-color: darkseagreen; /* Button background color */
+  background-color: darkseagreen; 
   border: none;
   border-radius: 5px;
   cursor: pointer;
@@ -57,6 +57,6 @@ p {
 }
 
 .start-button:hover {
-  background-color: seagreen; /* Darker shade on hover */
+  background-color: seagreen; 
 }
 </style>

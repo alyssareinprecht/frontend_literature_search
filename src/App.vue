@@ -11,7 +11,7 @@
       </div>
     </header>
     <main class="wrapper">
-      <!-- Your RouterView or other content -->
+      <!-- RouterView -->
       <RouterView />
     </main>
   </div>
@@ -37,7 +37,7 @@ body {
 }
 
 header {
-  background-color: #8FBC8F; /* Changed color to a green shade */
+  background-color: #8FBC8F; 
   color: #fff;
   height: 50px;
   display: flex;
@@ -50,7 +50,7 @@ header {
   width: 100%;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   z-index: 1000;
-  border-radius: 0 0 10px 10px; /* Added border-radius to soften edges */
+  border-radius: 0 0 10px 10px; 
 }
 
 .centered-content {
@@ -71,12 +71,12 @@ nav a {
   color: #fff;
   text-decoration: none;
   padding: 0.5rem 1rem;
-  border-radius: 4px; /* Added border-radius to soften edges */
+  border-radius: 4px; 
   transition: background-color 0.3s, color 0.3s;
 }
 
 nav a:hover {
-  background-color: #2E8B57; /* Darker green for hover effect */
+  background-color: #2E8B57; /* hover effect */
 }
 
 .wrapper {
@@ -84,7 +84,7 @@ nav a:hover {
   margin: 70px auto 2rem;
   padding: 1rem;
   background-color: whitesmoke;
-  border-radius: 8px; /* Added border-radius to soften edges */
+  border-radius: 8px; 
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 

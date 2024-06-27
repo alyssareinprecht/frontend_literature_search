@@ -19,21 +19,21 @@
   width: 100%;
   padding: 20px;
   box-sizing: border-box;
-  color: #333; /* Dark text color for readability */
+  color: #333; 
 }
 
 .content {
   max-width: 800px;
   margin: 0 auto;
   padding: 20px;
-  background: #cae3ca; /* White background for the content */
+  background: #cae3ca; 
   border-radius: 8px; /* Rounded corners */
 }
 
 h1 {
   font-size: 2em;
   margin-bottom: 20px;
-  color: #2c3e50; /* Darker color for the heading */
+  color: #2c3e50; 
 }
 
 p {
