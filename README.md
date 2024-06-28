@@ -28,10 +28,10 @@ Before running the application, ensure you have the following software installed
 
 1. **Start the development server:**
     ```bash
-    npm run serve
+    npm run dev
     ```
 2. **Access the application:**
-  Open your browser and navigate to http://localhost:8080 or click directly on the link provided in the terminal after running the aforementioned command. 
+  Open your browser and navigate to http://localhost:5173 or click directly on the link provided in the terminal after running the aforementioned command. 
 
 ### API Endpoints
 
