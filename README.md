@@ -1,37 +1,43 @@
-<<<<<<< HEAD
-# literature_search_frontend
+## Vue.js Frontend README
 
-This template should help get you started developing with Vue 3 in Vite.
+### Prerequisites
 
-## Recommended IDE Setup
+Before running the application, ensure you have the following software installed:
+* Node.js (version 12.x or later)
+* npm (version 6.x or later) or yarn
 
-[VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+### Installation
 
-## Type Support for `.vue` Imports in TS
+1. **Use the provided folder OR clone the repository:**
+    ```bash
+    git clone https://github.com/alyssareinprecht/frontend_literature_search
+    cd frontend_literature_search
+    ```
 
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
+2. **Install dependencies:**
+   ```bash
+    npm install axios vuedraggable vue
+    ```
+    ### Dependencies
 
-## Customize configuration
+    - `axios` for making HTTP requests.
+    - `vuedraggable` for drag-and-drop functionality.
+    - `vue` for the core framework.
 
-See [Vite Configuration Reference](https://vitejs.dev/config/).
+### Running the Project
 
-## Project Setup
+1. **Start the development server:**
+    ```bash
+    npm run serve
+    ```
+2. **Access the application:**
+  Open your browser and navigate to http://localhost:8080 or click directly on the link provided in the terminal after running the aforementioned command. 
 
-```sh
-npm install
-```
+### API Endpoints
 
-### Compile and Hot-Reload for Development
+Ensure the backend server is running and accessible at `http://localhost:5000`. The application interacts with the following API endpoints:
 
-```sh
-npm run dev
-```
-
-### Type-Check, Compile and Minify for Production
-
-```sh
-npm run build
-```
-=======
-# literature_search_frontend
->>>>>>> 572a26f0ee9b21bb4b677fe8fdc4d9eb68379bba
+* `GET /all_papers` - Fetches all papers when no tags are selected.
+* `POST /rank_papers` - Fetches ranked papers based on selected include and exclude tags.
+* `GET /keywords` - Fetches all available keywords.
+* `POST /generate_word_cloud` - Generates a word cloud based on the provided word frequency dictionary.
